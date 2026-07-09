@@ -1,0 +1,22 @@
+services:
+  java-firstapi-db:
+    container_name: java-firstapi-db
+    image: postgres:18.1-alpine
+    environment:
+      POSTGRES_DB: todo-db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - java-todo-data:/var/lib/postgresql/data
+
+  mail-pit:
+    container_name: mail-pit
+    image: axllent/mailpit:latest
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+volumes:
+  java-todo-data:
