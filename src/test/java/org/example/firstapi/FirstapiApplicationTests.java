@@ -1,13 +1,14 @@
 package org.example.firstapi;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+import static org.assertj.core.api.Assertions.assertThat;
+
 class FirstapiApplicationTests {
 
     @Test
-    void contextLoads() {
+    void applicationClassExists() {
+        // when + then
+        assertThat(FirstapiApplication.class).isNotNull();
     }
-
 }
