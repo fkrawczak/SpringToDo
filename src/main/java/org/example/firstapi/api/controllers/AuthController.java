@@ -3,7 +3,7 @@ package org.example.firstapi.api.controllers;
 import jakarta.validation.Valid;
 import org.example.firstapi.api.contracts.request.LoginUserRequest;
 import org.example.firstapi.api.contracts.response.LoginUserResponse;
-import org.example.firstapi.application.security.AuthTokens;
+import org.example.firstapi.application.usecase.loginuser.AuthTokens;
 import org.example.firstapi.application.usecase.loginuser.LoginUserCommand;
 import org.example.firstapi.application.usecase.loginuser.LoginUserHandler;
 import org.springframework.web.bind.annotation.PostMapping;
