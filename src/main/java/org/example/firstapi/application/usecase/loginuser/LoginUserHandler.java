@@ -2,7 +2,6 @@ package org.example.firstapi.application.usecase.loginuser;
 
 import org.example.firstapi.application.exceptions.InvalidCredentialsException;
 import org.example.firstapi.application.security.AccessTokenService;
-import org.example.firstapi.application.security.AuthTokens;
 import org.example.firstapi.application.security.RefreshTokenService;
 import org.example.firstapi.application.core.EmailNormalizer;
 import org.example.firstapi.domain.model.user.User;
