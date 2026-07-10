@@ -1,6 +1,8 @@
 package org.example.firstapi.api.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -10,6 +12,7 @@ import org.example.firstapi.api.contracts.response.RegisterUserResponse;
 import org.example.firstapi.application.usecase.registeruser.RegisterUserCommand;
 import org.example.firstapi.application.usecase.registeruser.RegisterUserHandler;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,8 +37,16 @@ public class RegisterController {
     @Operation(summary = "Register a new user")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "User registered"),
-            @ApiResponse(responseCode = "400", description = "Request body validation failed"),
-            @ApiResponse(responseCode = "409", description = "Email is already taken")
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Request body validation failed",
+                    content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "Email is already taken",
+                    content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+            )
     })
     public RegisterUserResponse register(@Valid @RequestBody RegisterUserRequest request) {
         RegisterUserCommand command = new RegisterUserCommand(

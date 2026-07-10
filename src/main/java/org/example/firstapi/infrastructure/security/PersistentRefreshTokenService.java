@@ -1,6 +1,7 @@
 package org.example.firstapi.infrastructure.security;
 
 import org.example.firstapi.application.security.RefreshTokenService;
+import org.example.firstapi.application.exceptions.InvalidRefreshTokenException;
 import org.example.firstapi.domain.model.refreshtoken.RefreshToken;
 import org.example.firstapi.domain.model.refreshtoken.RefreshTokenRepository;
 import org.example.firstapi.domain.model.user.User;
@@ -45,6 +46,16 @@ public class PersistentRefreshTokenService implements RefreshTokenService {
         refreshTokenRepository.save(new RefreshToken(user, tokenHash, createdAt, expiresAt));
 
         return token;
+    }
+
+    @Override
+    public User getUserForValidToken(String token) {
+        OffsetDateTime now = clock.now();
+
+        return refreshTokenRepository.findByTokenHash(hash(token))
+                .filter(refreshToken -> refreshToken.getExpiresAt().isAfter(now))
+                .map(RefreshToken::getUser)
+                .orElseThrow(InvalidRefreshTokenException::new);
     }
 
     private String createRefreshToken() {
