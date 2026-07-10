@@ -27,6 +27,8 @@ dependencies {
     implementation("org.springframework.security:spring-security-crypto")
     implementation("org.springframework.security:spring-security-oauth2-jose")
     implementation("org.flywaydb:flyway-core")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-scalar:3.0.3")
 
     runtimeOnly("org.postgresql:postgresql")
     runtimeOnly("org.flywaydb:flyway-database-postgresql")
