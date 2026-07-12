@@ -5,6 +5,8 @@ import org.example.firstapi.application.usecase.createtaskitem.CreateTaskItemCom
 import org.example.firstapi.application.usecase.createtaskitem.CreateTaskItemHandler;
 import org.example.firstapi.application.usecase.deletetaskitem.DeleteTaskItemCommand;
 import org.example.firstapi.application.usecase.deletetaskitem.DeleteTaskItemHandler;
+import org.example.firstapi.application.usecase.updatetaskitem.UpdateTaskItemCommand;
+import org.example.firstapi.application.usecase.updatetaskitem.UpdateTaskItemHandler;
 import org.example.firstapi.application.queries.gettaskitem.GetTaskItemHandler;
 import org.example.firstapi.application.queries.gettaskitem.GetTaskItemQuery;
 import org.example.firstapi.application.dtos.TaskItemResult;
@@ -35,6 +37,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 
@@ -43,6 +46,7 @@ class TaskItemControllerTest {
     private DeleteTaskItemHandler deleteHandler;
     private GetTaskItemHandler getHandler;
     private GetTaskItemsHandler getItemsHandler;
+    private UpdateTaskItemHandler updateHandler;
     private MockMvc mockMvc;
     private UUID userId;
 
@@ -52,14 +56,35 @@ class TaskItemControllerTest {
         deleteHandler = mock(DeleteTaskItemHandler.class);
         getHandler = mock(GetTaskItemHandler.class);
         getItemsHandler = mock(GetTaskItemsHandler.class);
+        updateHandler = mock(UpdateTaskItemHandler.class);
         userId = UUID.randomUUID();
         Jwt jwt = Jwt.withTokenValue("token").header("alg", "HS256").subject(userId.toString())
                 .issuedAt(Instant.now()).expiresAt(Instant.now().plusSeconds(300)).build();
-        mockMvc = standaloneSetup(new TaskItemController(handler, deleteHandler, getHandler, getItemsHandler))
+        mockMvc = standaloneSetup(new TaskItemController(handler, deleteHandler, getHandler, getItemsHandler,
+                        updateHandler))
                 .setCustomArgumentResolvers(jwtResolver(jwt))
                 .setControllerAdvice(new ApiExceptionHandler())
                 .build();
     }
+
+    @Test
+    void updateReturnsNoContentAndPassesBodyWithAuthenticatedUserId() throws Exception {
+        // given
+        UUID taskId = UUID.fromString("2a47f6b0-134e-4349-b987-6758bcf1a74f");
+
+        // when
+        var result = mockMvc.perform(put("/api/tasks/{taskId}", taskId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"title":"Buy bread","status":"IN_PROGRESS","description":"Whole grain","deadline":"2030-08-01T12:00:00Z"}
+                        """));
+
+        // then
+        result.andExpect(status().isNoContent());
+        verify(updateHandler).handle(new UpdateTaskItemCommand(taskId, userId, "Buy bread",
+                TaskItemStatus.IN_PROGRESS, "Whole grain", OffsetDateTime.parse("2030-08-01T12:00:00Z")));
+    }
+
 
     @Test
     void getReturnsTaskAndPassesTaskAndAuthenticatedUserIds() throws Exception {

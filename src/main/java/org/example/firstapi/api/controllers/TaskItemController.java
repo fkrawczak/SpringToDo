@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.example.firstapi.api.contracts.request.CreateTaskItemRequest;
 import org.example.firstapi.api.contracts.request.GetTaskItemsRequest;
+import org.example.firstapi.api.contracts.request.UpdateTaskItemRequest;
 import org.example.firstapi.api.contracts.response.CreateTaskItemResponse;
 import org.example.firstapi.application.dtos.PageResult;
 import org.example.firstapi.application.dtos.TaskItemResult;
@@ -15,6 +16,8 @@ import org.example.firstapi.application.usecase.createtaskitem.CreateTaskItemCom
 import org.example.firstapi.application.usecase.createtaskitem.CreateTaskItemHandler;
 import org.example.firstapi.application.usecase.deletetaskitem.DeleteTaskItemCommand;
 import org.example.firstapi.application.usecase.deletetaskitem.DeleteTaskItemHandler;
+import org.example.firstapi.application.usecase.updatetaskitem.UpdateTaskItemCommand;
+import org.example.firstapi.application.usecase.updatetaskitem.UpdateTaskItemHandler;
 import org.example.firstapi.application.queries.gettaskitem.GetTaskItemHandler;
 import org.example.firstapi.application.queries.gettaskitem.GetTaskItemQuery;
 import org.springdoc.core.annotations.ParameterObject;
@@ -33,13 +36,26 @@ public class TaskItemController {
     private final DeleteTaskItemHandler deleteHandler;
     private final GetTaskItemHandler getHandler;
     private final GetTaskItemsHandler getItemsHandler;
+    private final UpdateTaskItemHandler updateHandler;
 
     public TaskItemController(CreateTaskItemHandler createHandler, DeleteTaskItemHandler deleteHandler,
-                              GetTaskItemHandler getHandler, GetTaskItemsHandler getItemsHandler) {
+                              GetTaskItemHandler getHandler, GetTaskItemsHandler getItemsHandler,
+                              UpdateTaskItemHandler updateHandler) {
         this.createHandler = createHandler;
         this.deleteHandler = deleteHandler;
         this.getHandler = getHandler;
         this.getItemsHandler = getItemsHandler;
+        this.updateHandler = updateHandler;
+    }
+
+    @PutMapping("/{taskId}")
+    @Operation(summary = "Update a task", security = @SecurityRequirement(name = "HTTP Bearer"))
+    public ResponseEntity<Void> update(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID taskId,
+                                       @Valid @RequestBody UpdateTaskItemRequest request) {
+        updateHandler.handle(new UpdateTaskItemCommand(taskId, UUID.fromString(jwt.getSubject()), request.title(),
+                request.status(), request.description(), request.deadline()));
+
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping
