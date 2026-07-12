@@ -7,6 +7,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import org.example.firstapi.domain.model.taskitem.TaskItem;
+import org.example.firstapi.domain.shared.AbstractEntity;
 import org.example.firstapi.domain.validation.DomainValidation;
 
 import java.util.LinkedHashSet;
@@ -16,7 +17,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "users")
-public class User {
+public class User extends AbstractEntity {
 
     @Id
     @Column(nullable = false, updatable = false, columnDefinition = "uuid")
