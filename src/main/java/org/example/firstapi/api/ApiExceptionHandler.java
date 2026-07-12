@@ -3,6 +3,8 @@ package org.example.firstapi.api;
 import org.example.firstapi.application.exceptions.EmailAlreadyTakenException;
 import org.example.firstapi.application.exceptions.InvalidCredentialsException;
 import org.example.firstapi.application.exceptions.InvalidRefreshTokenException;
+import org.example.firstapi.application.exceptions.TaskItemAccessDeniedException;
+import org.example.firstapi.application.exceptions.TaskItemNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.validation.FieldError;
@@ -29,6 +31,16 @@ public class ApiExceptionHandler {
     @ExceptionHandler(InvalidRefreshTokenException.class)
     ProblemDetail handleInvalidRefreshToken(InvalidRefreshTokenException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, exception.getMessage());
+    }
+
+    @ExceptionHandler(TaskItemNotFoundException.class)
+    ProblemDetail handleTaskItemNotFound(TaskItemNotFoundException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
+    }
+
+    @ExceptionHandler(TaskItemAccessDeniedException.class)
+    ProblemDetail handleTaskItemAccessDenied(TaskItemAccessDeniedException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, exception.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

@@ -3,6 +3,8 @@ package org.example.firstapi.api.controllers;
 import org.example.firstapi.api.ApiExceptionHandler;
 import org.example.firstapi.application.usecase.createtaskitem.CreateTaskItemCommand;
 import org.example.firstapi.application.usecase.createtaskitem.CreateTaskItemHandler;
+import org.example.firstapi.application.usecase.deletetaskitem.DeleteTaskItemCommand;
+import org.example.firstapi.application.usecase.deletetaskitem.DeleteTaskItemHandler;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,24 +25,40 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 
 class TaskItemControllerTest {
     private CreateTaskItemHandler handler;
+    private DeleteTaskItemHandler deleteHandler;
     private MockMvc mockMvc;
     private UUID userId;
 
     @BeforeEach
     void setUp() {
         handler = mock(CreateTaskItemHandler.class);
+        deleteHandler = mock(DeleteTaskItemHandler.class);
         userId = UUID.randomUUID();
         Jwt jwt = Jwt.withTokenValue("token").header("alg", "HS256").subject(userId.toString())
                 .issuedAt(Instant.now()).expiresAt(Instant.now().plusSeconds(300)).build();
-        mockMvc = standaloneSetup(new TaskItemController(handler))
+        mockMvc = standaloneSetup(new TaskItemController(handler, deleteHandler))
                 .setCustomArgumentResolvers(jwtResolver(jwt))
                 .setControllerAdvice(new ApiExceptionHandler())
                 .build();
+    }
+
+    @Test
+    void deleteReturnsNoContentAndPassesTaskAndAuthenticatedUserIds() throws Exception {
+        // given
+        UUID taskId = UUID.fromString("2a47f6b0-134e-4349-b987-6758bcf1a74f");
+
+        // when
+        var result = mockMvc.perform(delete("/api/tasks/{taskId}", taskId));
+
+        // then
+        result.andExpect(status().isNoContent());
+        verify(deleteHandler).handle(new DeleteTaskItemCommand(taskId, userId));
     }
 
     @Test
