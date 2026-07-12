@@ -1,15 +1,6 @@
 package org.example.firstapi.domain.model.taskitem;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import org.example.firstapi.domain.model.user.User;
 import org.example.firstapi.domain.shared.AbstractEntity;
 import org.example.firstapi.domain.shared.Clock;
@@ -42,7 +33,6 @@ public class TaskItem extends AbstractEntity {
     @JoinColumn(name = "updated_by", nullable = false)
     private User updatedBy;
 
-    @Lob
     @Column(nullable = false, columnDefinition = "TEXT")
     private String title;
 

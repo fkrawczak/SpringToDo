@@ -5,14 +5,19 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.example.firstapi.api.contracts.request.CreateTaskItemRequest;
+import org.example.firstapi.api.contracts.request.GetTaskItemsRequest;
 import org.example.firstapi.api.contracts.response.CreateTaskItemResponse;
+import org.example.firstapi.application.dtos.PageResult;
+import org.example.firstapi.application.dtos.TaskItemResult;
+import org.example.firstapi.application.queries.gettaskitems.GetTaskItemsHandler;
+import org.example.firstapi.application.queries.gettaskitems.GetTaskItemsQuery;
 import org.example.firstapi.application.usecase.createtaskitem.CreateTaskItemCommand;
 import org.example.firstapi.application.usecase.createtaskitem.CreateTaskItemHandler;
 import org.example.firstapi.application.usecase.deletetaskitem.DeleteTaskItemCommand;
 import org.example.firstapi.application.usecase.deletetaskitem.DeleteTaskItemHandler;
 import org.example.firstapi.application.queries.gettaskitem.GetTaskItemHandler;
 import org.example.firstapi.application.queries.gettaskitem.GetTaskItemQuery;
-import org.example.firstapi.application.queries.gettaskitem.TaskItemResult;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -27,12 +32,22 @@ public class TaskItemController {
     private final CreateTaskItemHandler createHandler;
     private final DeleteTaskItemHandler deleteHandler;
     private final GetTaskItemHandler getHandler;
+    private final GetTaskItemsHandler getItemsHandler;
 
     public TaskItemController(CreateTaskItemHandler createHandler, DeleteTaskItemHandler deleteHandler,
-                              GetTaskItemHandler getHandler) {
+                              GetTaskItemHandler getHandler, GetTaskItemsHandler getItemsHandler) {
         this.createHandler = createHandler;
         this.deleteHandler = deleteHandler;
         this.getHandler = getHandler;
+        this.getItemsHandler = getItemsHandler;
+    }
+
+    @GetMapping
+    @Operation(summary = "Get authenticated user's tasks", security = @SecurityRequirement(name = "HTTP Bearer"))
+    public PageResult<TaskItemResult> getAll(@AuthenticationPrincipal Jwt jwt,
+                                              @Valid @ParameterObject GetTaskItemsRequest request) {
+        return getItemsHandler.handle(new GetTaskItemsQuery(UUID.fromString(jwt.getSubject()),
+                request.getStatuses(), request.getPage(), request.getSize(), request.getSearch()));
     }
 
     @GetMapping("/{taskId}")
