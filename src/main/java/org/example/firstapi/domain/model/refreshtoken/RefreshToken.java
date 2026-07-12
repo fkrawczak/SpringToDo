@@ -8,6 +8,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import org.example.firstapi.domain.model.user.User;
+import org.example.firstapi.domain.shared.AbstractEntity;
 import org.example.firstapi.domain.validation.DomainValidation;
 
 import java.time.OffsetDateTime;
@@ -16,7 +17,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "refresh_tokens")
-public class RefreshToken {
+public class RefreshToken extends AbstractEntity {
 
     @Id
     @Column(nullable = false, updatable = false, columnDefinition = "uuid")

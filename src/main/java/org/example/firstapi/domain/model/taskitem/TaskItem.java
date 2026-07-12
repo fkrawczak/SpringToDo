@@ -11,6 +11,7 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import org.example.firstapi.domain.model.user.User;
+import org.example.firstapi.domain.shared.AbstractEntity;
 import org.example.firstapi.domain.shared.Clock;
 import org.example.firstapi.domain.validation.DomainValidation;
 
@@ -21,7 +22,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "task_items")
-public class TaskItem {
+public class TaskItem extends AbstractEntity {
 
     @Id
     @Column(nullable = false, updatable = false, columnDefinition = "uuid")
