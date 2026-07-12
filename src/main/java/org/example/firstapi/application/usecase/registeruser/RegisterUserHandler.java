@@ -1,7 +1,9 @@
 package org.example.firstapi.application.usecase.registeruser;
 
+import org.example.firstapi.application.events.UserRegisteredEvent;
 import org.example.firstapi.application.exceptions.EmailAlreadyTakenException;
 import org.example.firstapi.application.core.EmailNormalizer;
+import org.example.firstapi.application.events.EventPublisher;
 import org.example.firstapi.domain.model.user.User;
 import org.example.firstapi.domain.model.user.UserRepository;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -16,10 +18,16 @@ public class RegisterUserHandler {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EventPublisher eventPublisher;
 
-    public RegisterUserHandler(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public RegisterUserHandler(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            EventPublisher eventPublisher
+    ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -34,7 +42,14 @@ public class RegisterUserHandler {
         User user = new User(email, hashedPassword, command.firstName().trim(), command.lastName().trim());
 
         try {
-            return userRepository.save(user).getId();
+            User savedUser = userRepository.save(user);
+            eventPublisher.publish(new UserRegisteredEvent(
+                    savedUser.getEmail(),
+                    savedUser.getFirstName(),
+                    savedUser.getLastName()
+            ));
+
+            return savedUser.getId();
         } catch (DataIntegrityViolationException exception) {
             throw new EmailAlreadyTakenException(email);
         }

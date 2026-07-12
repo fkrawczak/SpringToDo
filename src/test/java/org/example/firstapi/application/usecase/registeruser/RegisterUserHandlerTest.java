@@ -1,6 +1,8 @@
 package org.example.firstapi.application.usecase.registeruser;
 
+import org.example.firstapi.application.events.UserRegisteredEvent;
 import org.example.firstapi.application.exceptions.EmailAlreadyTakenException;
+import org.example.firstapi.application.events.EventPublisher;
 import org.example.firstapi.domain.model.user.User;
 import org.example.firstapi.domain.model.user.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -29,6 +31,9 @@ class RegisterUserHandlerTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private EventPublisher eventPublisher;
 
     @InjectMocks
     private RegisterUserHandler handler;
@@ -59,6 +64,7 @@ class RegisterUserHandlerTest {
         assertThat(savedUser.getPassword()).isEqualTo("hashed-password");
         assertThat(savedUser.getFirstName()).isEqualTo("Jane");
         assertThat(savedUser.getLastName()).isEqualTo("Doe");
+        verify(eventPublisher).publish(new UserRegisteredEvent("user@example.com", "Jane", "Doe"));
     }
 
     @Test
@@ -78,6 +84,7 @@ class RegisterUserHandlerTest {
 
         // then
         verifyNoInteractions(passwordEncoder);
+        verifyNoInteractions(eventPublisher);
     }
 
     @Test
@@ -96,5 +103,7 @@ class RegisterUserHandlerTest {
         )))
                 .isInstanceOf(EmailAlreadyTakenException.class)
                 .hasMessage("Email is already taken: taken@example.com");
+
+        verifyNoInteractions(eventPublisher);
     }
 }
