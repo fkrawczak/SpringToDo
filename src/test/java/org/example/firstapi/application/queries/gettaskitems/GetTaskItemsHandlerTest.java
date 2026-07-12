@@ -3,6 +3,7 @@ package org.example.firstapi.application.queries.gettaskitems;
 import org.example.firstapi.application.dtos.PageResult;
 import org.example.firstapi.application.dtos.TaskItemResult;
 import org.example.firstapi.domain.model.taskitem.TaskItem;
+import org.example.firstapi.domain.model.taskitem.TaskItemPage;
 import org.example.firstapi.domain.model.taskitem.TaskItemRepository;
 import org.example.firstapi.domain.model.user.User;
 import org.example.firstapi.domain.shared.Clock;
@@ -12,13 +13,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -41,8 +40,8 @@ class GetTaskItemsHandlerTest {
         TaskItemResult expectedItem = new TaskItemResult(resultTask.getId(), resultTask.getTitle(),
                 resultTask.getDescription(), resultTask.getDeadline(), resultTask.getStatus(),
                 resultTask.getCreatedAt(), resultTask.getUpdatedAt());
-        when(taskItemRepository.countByFilters(any(), any(), eq(false), any())).thenReturn(1L);
-        when(taskItemRepository.findByFilters(any(), any(), eq(false), any(), any())).thenReturn(new ArrayList<>(List.of(resultTask)));
+        when(taskItemRepository.findByFilters(any()))
+                .thenReturn(new TaskItemPage(List.of(resultTask), 1L));
 
         // when
         PageResult<TaskItemResult> result = handler.handle(query);
