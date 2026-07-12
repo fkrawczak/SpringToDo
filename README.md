@@ -1,6 +1,6 @@
 # First API
 
-A REST API for managing user tasks, built with Java and Spring Boot. The application allows users to register, log in, create, retrieve, filter, and delete their own tasks.
+A REST API for managing user tasks, built with Java and Spring Boot. The application allows users to register, log in, create, edit, retrieve, filter, and delete their own tasks.
 
 ## Key features
 
