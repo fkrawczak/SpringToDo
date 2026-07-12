@@ -7,7 +7,10 @@ import org.example.firstapi.application.usecase.deletetaskitem.DeleteTaskItemCom
 import org.example.firstapi.application.usecase.deletetaskitem.DeleteTaskItemHandler;
 import org.example.firstapi.application.queries.gettaskitem.GetTaskItemHandler;
 import org.example.firstapi.application.queries.gettaskitem.GetTaskItemQuery;
-import org.example.firstapi.application.queries.gettaskitem.TaskItemResult;
+import org.example.firstapi.application.dtos.TaskItemResult;
+import org.example.firstapi.application.dtos.PageResult;
+import org.example.firstapi.application.queries.gettaskitems.GetTaskItemsHandler;
+import org.example.firstapi.application.queries.gettaskitems.GetTaskItemsQuery;
 import org.example.firstapi.domain.model.taskitem.TaskItemStatus;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +28,7 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -38,6 +42,7 @@ class TaskItemControllerTest {
     private CreateTaskItemHandler handler;
     private DeleteTaskItemHandler deleteHandler;
     private GetTaskItemHandler getHandler;
+    private GetTaskItemsHandler getItemsHandler;
     private MockMvc mockMvc;
     private UUID userId;
 
@@ -46,10 +51,11 @@ class TaskItemControllerTest {
         handler = mock(CreateTaskItemHandler.class);
         deleteHandler = mock(DeleteTaskItemHandler.class);
         getHandler = mock(GetTaskItemHandler.class);
+        getItemsHandler = mock(GetTaskItemsHandler.class);
         userId = UUID.randomUUID();
         Jwt jwt = Jwt.withTokenValue("token").header("alg", "HS256").subject(userId.toString())
                 .issuedAt(Instant.now()).expiresAt(Instant.now().plusSeconds(300)).build();
-        mockMvc = standaloneSetup(new TaskItemController(handler, deleteHandler, getHandler))
+        mockMvc = standaloneSetup(new TaskItemController(handler, deleteHandler, getHandler, getItemsHandler))
                 .setCustomArgumentResolvers(jwtResolver(jwt))
                 .setControllerAdvice(new ApiExceptionHandler())
                 .build();
@@ -78,6 +84,50 @@ class TaskItemControllerTest {
                 .andExpect(jsonPath("$.createdAt").value("2026-07-12T10:00:00Z"))
                 .andExpect(jsonPath("$.updatedAt").value("2026-07-12T10:00:00Z"));
         verify(getHandler).handle(new GetTaskItemQuery(taskId, userId));
+    }
+
+    @Test
+    void getAllReturnsPageAndPassesFiltersAndAuthenticatedUserId() throws Exception {
+        // given
+        TaskItemResult task = new TaskItemResult(UUID.randomUUID(), "Buy milk", null,
+                OffsetDateTime.parse("2030-07-13T10:00:00Z"), TaskItemStatus.NEW,
+                OffsetDateTime.parse("2026-07-12T10:00:00Z"), OffsetDateTime.parse("2026-07-12T10:00:00Z"));
+        when(getItemsHandler.handle(any(GetTaskItemsQuery.class))).thenReturn(new PageResult<>(List.of(task), 12));
+
+        // when
+        var result = mockMvc.perform(get("/api/tasks")
+                .param("statuses", "NEW", "IN_PROGRESS")
+                .param("page", "2")
+                .param("size", "5")
+                .param("search", " milk "));
+
+        // then
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].title").value("Buy milk"))
+                .andExpect(jsonPath("$.total").value(12));
+        verify(getItemsHandler).handle(new GetTaskItemsQuery(userId,
+                List.of(TaskItemStatus.NEW, TaskItemStatus.IN_PROGRESS), 2, 5, " milk "));
+    }
+
+    @Test
+    void getAllUsesPaginationDefaults() throws Exception {
+        // given
+        when(getItemsHandler.handle(any(GetTaskItemsQuery.class))).thenReturn(new PageResult<>(List.of(), 0));
+
+        // when
+        mockMvc.perform(get("/api/tasks")).andExpect(status().isOk());
+
+        // then
+        verify(getItemsHandler).handle(new GetTaskItemsQuery(userId, List.of(), 1, 10, null));
+    }
+
+    @Test
+    void getAllRejectsInvalidPaginationBeforeCallingHandler() throws Exception {
+        // when + then
+        mockMvc.perform(get("/api/tasks").param("page", "0").param("size", "101"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(getItemsHandler);
     }
 
     @Test

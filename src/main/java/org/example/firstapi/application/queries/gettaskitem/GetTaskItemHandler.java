@@ -2,6 +2,7 @@ package org.example.firstapi.application.queries.gettaskitem;
 
 import org.example.firstapi.application.exceptions.TaskItemAccessDeniedException;
 import org.example.firstapi.application.exceptions.TaskItemNotFoundException;
+import org.example.firstapi.application.dtos.TaskItemResult;
 import org.example.firstapi.domain.model.taskitem.TaskItem;
 import org.example.firstapi.domain.model.taskitem.TaskItemRepository;
 import org.springframework.stereotype.Service;

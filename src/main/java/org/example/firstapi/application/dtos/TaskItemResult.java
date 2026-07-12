@@ -1,4 +1,4 @@
-package org.example.firstapi.application.queries.gettaskitem;
+package org.example.firstapi.application.dtos;
 
 import org.example.firstapi.domain.model.taskitem.TaskItemStatus;
 
