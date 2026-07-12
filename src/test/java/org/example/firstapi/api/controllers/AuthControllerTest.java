@@ -3,17 +3,22 @@ package org.example.firstapi.api.controllers;
 import org.example.firstapi.api.ApiExceptionHandler;
 import org.example.firstapi.application.exceptions.InvalidCredentialsException;
 import org.example.firstapi.application.exceptions.InvalidRefreshTokenException;
+import org.example.firstapi.application.exceptions.EmailAlreadyTakenException;
 import org.example.firstapi.application.usecase.loginuser.AuthTokens;
 import org.example.firstapi.application.usecase.loginuser.LoginUserCommand;
 import org.example.firstapi.application.usecase.loginuser.LoginUserHandler;
 import org.example.firstapi.application.usecase.refreshaccesstoken.RefreshAccessTokenCommand;
 import org.example.firstapi.application.usecase.refreshaccesstoken.RefreshAccessTokenHandler;
+import org.example.firstapi.application.usecase.registeruser.RegisterUserCommand;
+import org.example.firstapi.application.usecase.registeruser.RegisterUserHandler;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -32,6 +37,7 @@ class AuthControllerTest {
 
     private LoginUserHandler loginUserHandler;
     private RefreshAccessTokenHandler refreshAccessTokenHandler;
+    private RegisterUserHandler registerUserHandler;
     private MockMvc mockMvc;
     private static final String loginPath = "/api/login";
 
@@ -39,9 +45,78 @@ class AuthControllerTest {
     void setUp() {
         loginUserHandler = mock(LoginUserHandler.class);
         refreshAccessTokenHandler = mock(RefreshAccessTokenHandler.class);
-        mockMvc = standaloneSetup(new AuthController(loginUserHandler, refreshAccessTokenHandler, 2_592_000))
+        registerUserHandler = mock(RegisterUserHandler.class);
+        mockMvc = standaloneSetup(new AuthController(loginUserHandler, refreshAccessTokenHandler,
+                        registerUserHandler, 2_592_000))
                 .setControllerAdvice(new ApiExceptionHandler())
                 .build();
+    }
+
+    @Test
+    void registerReturnsCreatedUserId() throws Exception {
+        UUID userId = UUID.randomUUID();
+        when(registerUserHandler.handle(any(RegisterUserCommand.class))).thenReturn(userId);
+
+        mockMvc.perform(post("/api/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "user@example.com",
+                                  "firstName": "Jane",
+                                  "lastName": "Doe",
+                                  "password": "secret"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(userId.toString()));
+
+        ArgumentCaptor<RegisterUserCommand> captor = ArgumentCaptor.forClass(RegisterUserCommand.class);
+        verify(registerUserHandler).handle(captor.capture());
+        assertThat(captor.getValue())
+                .isEqualTo(new RegisterUserCommand("user@example.com", "Jane", "Doe", "secret"));
+    }
+
+    @Test
+    void registerAcceptsConfiguredFirstNameAndLastNameAliases() throws Exception {
+        UUID userId = UUID.randomUUID();
+        when(registerUserHandler.handle(any(RegisterUserCommand.class))).thenReturn(userId);
+
+        mockMvc.perform(post("/api/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "user@example.com",
+                                  "first_name": "Jane",
+                                  "lastname": "Doe",
+                                  "password": "secret"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(userId.toString()));
+
+        ArgumentCaptor<RegisterUserCommand> captor = ArgumentCaptor.forClass(RegisterUserCommand.class);
+        verify(registerUserHandler).handle(captor.capture());
+        assertThat(captor.getValue().firstName()).isEqualTo("Jane");
+        assertThat(captor.getValue().lastName()).isEqualTo("Doe");
+    }
+
+    @Test
+    void registerReturnsConflictWhenEmailIsAlreadyTaken() throws Exception {
+        when(registerUserHandler.handle(any(RegisterUserCommand.class)))
+                .thenThrow(new EmailAlreadyTakenException("user@example.com"));
+
+        mockMvc.perform(post("/api/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "user@example.com",
+                                  "firstName": "Jane",
+                                  "lastName": "Doe",
+                                  "password": "secret"
+                                }
+                                """))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.detail").value("Email is already taken: user@example.com"));
     }
 
     @Test
